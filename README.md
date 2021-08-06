@@ -35,7 +35,7 @@ or to other remote video producers
 
 ### Contributing
 
-  - StookyBill's default branch is called `monster` because `main` is boring and it's an excellent excuse to get (Monster Mash by Bobby Pickett)[https://youtu.be/SOFCQ2bfmHw] stuck in your head as you `git pull` from the `monster` branch.
+  - StookyBill's default branch is called `monster` because `main` is boring and it's an excellent excuse to get [Monster Mash by Bobby Pickett](https://youtu.be/SOFCQ2bfmHw) stuck in your head as you `git pull` from the `monster` branch.
 
 ### CI/CD and Deployment
 
