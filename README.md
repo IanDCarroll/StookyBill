@@ -12,14 +12,14 @@ or to other remote video producers
 
 ### Dependencies
 
-  - [AWS](https://aws.amazon.com/)
+  - [AWS](https://aws.amazon.com/) (Alternate cloud hosting to come)
   - [Terraform](https://www.terraform.io/)
   - [Docker](https://www.docker.com/)
   - [nginx-rtmp Docker Image](https://hub.docker.com/r/tiangolo/nginx-rtmp/)
 
 ### Local Setup
 
-  -  `docker-compose commands coming soon`
+  -  `docker-compose up`
 
 ### Local Testing
   #### Automated Testing
@@ -28,9 +28,9 @@ or to other remote video producers
 
   #### Manual Testing
   - the most straightforward way to manually test is with OBS and VLC
-  - Run StookyBill Locally:  
-  `docker-compose commands coming soon`
   - [Setup Manual Testing](docs/manual_testing.md)
+  - Run StookyBill Locally:  
+  `docker-compose up`
   - Validate what OBS sends is what VLC recieves
 
 ### Contributing
@@ -47,6 +47,7 @@ or to other remote video producers
 
 ### Additional Resources
 
+  - [Terraform Up and Running](https://www.amazon.com/Terraform-Running-Writing-Infrastructure-Code/dp/1492046906)
   - [nginx-rtmp-module docs](https://github.com/arut/nginx-rtmp-module/wiki/Directives)
   - [nginx](https://www.nginx.com/)
   - [manual Windows RTMP server setup](https://www.youtube.com/watch?v=n-EdUHNK9UI)
