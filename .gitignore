@@ -1,1 +1,6 @@
+.DS_Store
 /VLC_logs
+/OBS_Test_Config
+/.terraform
+terraform.tfstate
+terraform.tfstate.backup
