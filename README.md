@@ -39,7 +39,22 @@ or to other remote video producers
 
 ### CI/CD and Deployment
 
-  - Coming soon
+  #### Setup
+  - Install [Terraform CLI](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started)
+  - `terraform init` if this is your first run
+  - Make sure you have [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) and that its [Configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-region)
+
+  #### Run
+
+  - `terraform apply` to spin up
+  - `terraform destroy` to teardown
+
+  #### Updating the lock file
+
+    - `terraform init`
+    - Run tests
+    - Commit the changes to `.terraform.lock.hcl` along with the infrastructure changes.
+    - if you're simply updating versions use `terraform init -upgrade` run tests, and submit as an indipendent PR.
 
 ### Production Monitoring and Telemetry
 
@@ -48,6 +63,7 @@ or to other remote video producers
 ### Additional Resources
 
   - [Terraform Up and Running](https://www.amazon.com/Terraform-Running-Writing-Infrastructure-Code/dp/1492046906)
+  - [Terraform Docs](https://www.terraform.io/docs/language/index.html)
   - [nginx-rtmp-module docs](https://github.com/arut/nginx-rtmp-module/wiki/Directives)
   - [nginx](https://www.nginx.com/)
   - [manual Windows RTMP server setup](https://www.youtube.com/watch?v=n-EdUHNK9UI)
