@@ -12,7 +12,9 @@
 ####  via Blackmagic Atem Mini
 
   1. [Get an Atem switcher](https://www.blackmagicdesign.com/products/atemmini)
-  1. Setup Instructions coming soon
+  1. [Follow this guide](https://heretorecord.com/blog/custom-streaming-destination-atem-mini-pro
+  )
+  1. Replace their cutom URL with the one pointing to where StookyBill will be listening `rtmp://localhost:1935/secret_stream_key`
 
 ### Setup an Output Monitor
 
