@@ -16,15 +16,19 @@ terraform {
 
 provider "aws" {
   profile = "default"
-  region  = "us-west-2"
+  region  = "us-west-1"
 }
 
-resource "aws_instance" "ubuntu_server" {
-  ami           = "ami-830c94e3"
+# resource "aws_vpc" "stookybill_vpc" {
+#   cidr_block = "10.0.0.0/16"
+# }
+
+resource "aws_instance" "omnios_server" {
+  ami           = "ami-0d2fc538b61b3a36a"
   instance_type = "t2.micro"
 
   tags = {
-    Name = "UbuntuServerInstance"
+    Name = "OmniOSServerInstance"
   }
 }
 
