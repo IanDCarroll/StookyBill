@@ -46,6 +46,10 @@ or to other remote video producers
 
   #### Run
 
+  ##### For application repo changes:
+  - coming soon
+
+  ##### For Infra changes:
   - `terraform apply` to spin up
   - `terraform destroy` to teardown
 
@@ -64,6 +68,7 @@ or to other remote video producers
 
   - [Terraform Up and Running](https://www.amazon.com/Terraform-Running-Writing-Infrastructure-Code/dp/1492046906)
   - [Terraform Docs](https://www.terraform.io/docs/language/index.html)
+  - [AWS Terraform Docker Up](https://medium.com/avmconsulting-blog/how-to-deploy-a-dockerised-node-js-application-on-aws-ecs-with-terraform-3e6bceb48785)
   - [nginx-rtmp-module docs](https://github.com/arut/nginx-rtmp-module/wiki/Directives)
   - [nginx](https://www.nginx.com/)
   - [manual Windows RTMP server setup](https://www.youtube.com/watch?v=n-EdUHNK9UI)
