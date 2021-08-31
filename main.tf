@@ -34,13 +34,19 @@ resource "aws_internet_gateway" "stookybill_internet_gateway" {
   }
 }
 
-resource "aws_subnet" "stookybill_transceiver" {
+variable "local_zone" {
+  description = "value"
+  type = string
+  default = "us-west-2-lax-1a"
+}
+
+resource "aws_subnet" "stookybill_transceiver_subnet" {
   vpc_id = aws_vpc.stookybill_vpc.id
   cidr_block = "10.0.0.0/16"
-  availability_zone = "us-west-2-lax-1a"
+  availability_zone = var.local_zone
 
   tags = {
-    Name = "stookybill-transciever"
+    Name = "stookybill-transciever-subnet"
   }
 }
 
@@ -81,62 +87,9 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
   assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
 }
 
-resource "aws_instance" "stokkybill_ec2" {
-
-}
-
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   role       = "${aws_iam_role.ecsTaskExecutionRole.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-variable "rtmp_port" {
-  description = "The port that stookybill will be listening and replying"
-  type        = number
-  default     = 1935 # this is a port above 1024 and does not require root permissions
-}
-
-variable "instance_memory" {
-  description = "The RAM to allocate to stookybill"
-  type        = number
-  default     = 512 # MiB
-}
-
-variable "instance_cpu" {
-  description = "The CPU power to allocate to stookybill"
-  type        = number
-  default     = 256 # GHz?
-}
-
-# builds / runs nothing unless you've pushed "tiangolo/nginx-rtmp:latest" into ECR
-resource "aws_ecs_task_definition" "build_run_stookybill_task" {
-  family                   = "build-run-stookybill-task"
-  container_definitions    = <<DEFINITION
-  [
-    {
-      "name": "build-run-stookybill-task",
-      "image": "${aws_ecr_repository.stookybill_repo.repository_url}",
-      "essential": true,
-      "portMappings": [
-        {
-          "containerPort": ${var.rtmp_port},
-          "hostPort": ${var.rtmp_port}
-        }
-      ],
-      "memory": ${var.instance_memory},
-      "cpu": ${var.instance_cpu}
-    }
-  ]
-  DEFINITION
-  placement_constraints {
-    type       = "memberOf"
-    expression = "attribute:ecs.availability-zone in [us-west-2-lax-1a]"
-  }
-  requires_compatibilities = ["EC2"]
-  network_mode             = "awsvpc"
-  memory                   = var.instance_memory
-  cpu                      = var.instance_cpu
-  execution_role_arn       = "${aws_iam_role.ecsTaskExecutionRole.arn}"
 }
 
 resource "aws_security_group" "public_security_group" {
@@ -160,31 +113,122 @@ resource "aws_security_group" "public_security_group" {
   }
 }
 
-resource "aws_ecs_service" "stookybill_service" {
-  name            = "stookybill-service"
-  cluster         = "${aws_ecs_cluster.stookybill_cluster.id}"
-  task_definition = "${aws_ecs_task_definition.build_run_stookybill_task.arn}"
-  launch_type     = "EC2"
-  desired_count   = 1
+# resource "aws_network_interface" "stookybill_network_interface" {
+#   subnet_id   = aws_subnet.stookybill_transceiver_subnet.id
+#   private_ips = ["10.0.0.5"]
+#   security_groups = [aws_security_group.public_security_group.id]
 
-  placement_constraints {
-    type       = "memberOf"
-    expression = "attribute:ecs.availability-zone in [us-west-2-lax-1a]"
-  }
+#   tags = {
+#     Name = "stookybill-network-interface"
+#   }
+# }
 
-  network_configuration {
-    subnets          = ["${aws_subnet.stookybill_transceiver.id}"]
-    assign_public_ip = true
-    security_groups  = ["${aws_security_group.public_security_group.id}"]
-  }
+variable "rtmp_port" {
+  description = "The port that stookybill will be listening and replying"
+  type        = number
+  default     = 1935 # this is a port above 1024 and does not require root permissions
+}
+
+resource "aws_instance" "stookybill_ec2" {
+  ami                         = "ami-0671fe8a4329a12ee" # aws ec2 optimized linux (with docker) us-west-2
+  instance_type               = "t3.micro"
+  subnet_id                   = aws_subnet.stookybill_transceiver_subnet.id
+  availability_zone           = var.local_zone
+  vpc_security_group_ids      = ["${aws_security_group.public_security_group.id}"]
+  associate_public_ip_address = true # not sure if this is needed or handled by the internet gateway
+
+  user_data = <<-EOF
+              #!/bin/bash
+              docker pull tiangolo/nginx-rtmp
+              docker run -d -p ${var.rtmp_port}:${var.rtmp_port} --name stookybill-docker-container tiangolo/nginx-rtmp
+              EOF
+  # in theory I could replace this with a git clone and go from there.
+
+  # network_interface {
+  #   network_interface_id = aws_network_interface.stookybill_network_interface.id
+  #   device_index         = 0
+  # }
 
   tags = {
-    Name = "stookybill-ecs"
+    Name = "stookybill-ec2"
   }
 }
 
+# variable "launch_strategy" {
+#   description = "The way ECS will deploy the docker containers"
+#   type        = string
+#   default     = "EC2" # local zones do not support FARGATE, so we must manually configure this via ec2
+# }
+
+# variable "instance_memory" {
+#   description = "The RAM to allocate to stookybill"
+#   type        = number
+#   default     = 512 # MiB
+# }
+
+# variable "instance_cpu" {
+#   description = "The CPU power to allocate to stookybill"
+#   type        = number
+#   default     = 256 # GHz?
+# }
+
+# # builds / runs nothing unless you've pushed "tiangolo/nginx-rtmp:latest" into ECR
+# # and then run aws run-task ...
+# resource "aws_ecs_task_definition" "build_run_stookybill_task" {
+#   family                   = "build-run-stookybill-task"
+#   container_definitions    = <<DEFINITION
+#   [
+#     {
+#       "name": "build-run-stookybill-task",
+#       "image": "${aws_ecr_repository.stookybill_repo.repository_url}",
+#       "essential": true,
+#       "portMappings": [
+#         {
+#           "containerPort": ${var.rtmp_port},
+#           "hostPort": ${var.rtmp_port}
+#         }
+#       ],
+#       "memory": ${var.instance_memory},
+#       "cpu": ${var.instance_cpu}
+#     }
+#   ]
+#   DEFINITION
+#   placement_constraints {
+#     type       = "memberOf"
+#     expression = "attribute:ecs.availability-zone in [${var.local_zone}]"
+#   }
+#   requires_compatibilities = [var.launch_strategy]
+#   network_mode             = "awsvpc"
+#   memory                   = var.instance_memory
+#   cpu                      = var.instance_cpu
+#   execution_role_arn       = "${aws_iam_role.ecsTaskExecutionRole.arn}"
+# }
+
+# resource "aws_ecs_service" "stookybill_service" {
+#   name            = "stookybill-service"
+#   cluster         = "${aws_ecs_cluster.stookybill_cluster.id}"
+#   task_definition = "${aws_ecs_task_definition.build_run_stookybill_task.arn}"
+#   launch_type     = var.launch_strategy
+#   desired_count   = 1
+
+#   placement_constraints {
+#     type       = "memberOf"
+#     expression = "attribute:ecs.availability-zone in [${var.local_zone}]"
+#   }
+
+#   network_configuration {
+#     subnets          = ["${aws_subnet.stookybill_transceiver_subnet.id}"]
+#     assign_public_ip = true
+#     security_groups  = ["${aws_security_group.public_security_group.id}"]
+#   }
+
+#   tags = {
+#     Name = "stookybill-ecs"
+#   }
+# }
+
 output "public_ip" {
-  value = aws_instance.stokkybill_ec2.public_ip
+  value = aws_instance.stookybill_ec2.public_ip
   description = "The One IP adress for both sending and recieving video streams"
 }
 
