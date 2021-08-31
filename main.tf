@@ -86,6 +86,24 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+variable "rtmp_port" {
+  description = "The port that stookybill will be listening and replying"
+  type        = number
+  default     = 1935 # this is a port above 1024 and does not require root permissions
+}
+
+variable "instance_memory" {
+  description = "The RAM to allocate to stookybill"
+  type        = number
+  default     = 512 # MiB
+}
+
+variable "instance_cpu" {
+  description = "The CPU power to allocate to stookybill"
+  type        = number
+  default     = 256 # GHz?
+}
+
 # builds / runs nothing unless you've pushed "tiangolo/nginx-rtmp:latest" into ECR
 resource "aws_ecs_task_definition" "build_run_stookybill_task" {
   family                   = "build-run-stookybill-task"
@@ -97,27 +115,31 @@ resource "aws_ecs_task_definition" "build_run_stookybill_task" {
       "essential": true,
       "portMappings": [
         {
-          "containerPort": 1935,
-          "hostPort": 1935
+          "containerPort": ${var.rtmp_port},
+          "hostPort": ${var.rtmp_port}
         }
       ],
-      "memory": 512,
-      "cpu": 256
+      "memory": ${var.instance_memory},
+      "cpu": ${var.instance_cpu}
     }
   ]
   DEFINITION
-  requires_compatibilities = ["FARGATE"]
+  placement_constraints {
+    type       = "memberOf"
+    expression = "attribute:ecs.availability-zone in [us-west-2-lax-1a]"
+  }
+  requires_compatibilities = ["EC2"]
   network_mode             = "awsvpc"
-  memory                   = 512
-  cpu                      = 256
+  memory                   = var.instance_memory
+  cpu                      = var.instance_cpu
   execution_role_arn       = "${aws_iam_role.ecsTaskExecutionRole.arn}"
 }
 
 resource "aws_security_group" "public_security_group" {
   vpc_id = aws_vpc.stookybill_vpc.id
   ingress {
-    from_port   = 1935
-    to_port     = 1935
+    from_port   = var.rtmp_port
+    to_port     = var.rtmp_port
     protocol    = "TCP"
     cidr_blocks = ["0.0.0.0/0"] # may be the place to allow-list the broadcaster
   }
