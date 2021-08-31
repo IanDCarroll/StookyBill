@@ -183,6 +183,11 @@ resource "aws_ecs_service" "stookybill_service" {
   }
 }
 
+output "public_ip" {
+  value = aws_instance.stokkybill_ec2.public_ip
+  description = "The One IP adress for both sending and recieving video streams"
+}
+
 # for when I implement the 2-server model
 # resource "aws_security_group" "private_security_group" {
 #   vpc_id = aws_vpc.stookybill_vpc.id
