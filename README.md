@@ -46,12 +46,25 @@ or to other remote video producers
 
   #### Run
 
-  ##### For application repo changes:
-  - coming soon
+  ##### For application repo changes: (docs found in AWS Console => ECR)
+    - Login to AWS us-west-2 via console: `aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com`
+    You shoud see `Login Succeeded` in the terminal
+    - Spin up a local image: `docker-compose up`
+    - Tag the image as stookybill: `docker tag tiangolo/nginx-rtmp:latest stookybill` # what about the ports, dawg?
+    - Tag stookybill with the aws repo url: `docker tag stookybill <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/stookybill-repo:stookybill`
+    - [Push the Docker Image to ECR](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#use-ecr)
+    `docker push <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/stookybill-repo:stookybill`
+    - (do something to make sure stookybill gets deployed into ECS - hit a button in the ECS task actions to create) `aws ecs run-task`
+
+    - Delete repo (to save on storage costs): `aws ecr delete-repository --repository-name stookybill-repo --region us-west-2 --force`
 
   ##### For Infra changes:
-  - `terraform apply` to spin up
-  - `terraform destroy` to teardown
+
+  - `terraform apply` to provision 
+  - Find the task-definition name and revision in the AWS Console under ECS Task Definitions
+  - `aws ecs run-task --cluster stookybill-cluster --task-definition build-run-stookybill-task:<MY_CURRENT_REVISION>` to spin up
+  - `aws ecs stop-task build-run-stookybill-task:<MY_CURRENT_REVISION>` to spin down
+  - `terraform destroy` to teardown (and save on service costs)
 
   #### Updating the lock file
 
