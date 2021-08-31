@@ -81,6 +81,10 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
   assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
 }
 
+resource "aws_instance" "stokkybill_ec2" {
+
+}
+
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   role       = "${aws_iam_role.ecsTaskExecutionRole.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -160,8 +164,13 @@ resource "aws_ecs_service" "stookybill_service" {
   name            = "stookybill-service"
   cluster         = "${aws_ecs_cluster.stookybill_cluster.id}"
   task_definition = "${aws_ecs_task_definition.build_run_stookybill_task.arn}"
-  launch_type     = "FARGATE"
+  launch_type     = "EC2"
   desired_count   = 1
+
+  placement_constraints {
+    type       = "memberOf"
+    expression = "attribute:ecs.availability-zone in [us-west-2-lax-1a]"
+  }
 
   network_configuration {
     subnets          = ["${aws_subnet.stookybill_transceiver.id}"]
